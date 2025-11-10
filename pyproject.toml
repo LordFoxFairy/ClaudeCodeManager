@@ -1,0 +1,12 @@
+[project]
+name = "claudecodemanager"
+version = "0.1.0"
+description = "Claude Code 环境管理器 - 支持多账号/API快速切换"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.12.4",
+    "pyyaml>=6.0.3",
+    "typer>=0.20.0",
+    "rich>=13.7.0",
+]
