@@ -616,3 +616,76 @@ class EnvironmentManager:
 
         except Exception as e:
             self.console.print(f"[bold red]删除失败[/bold red]: {e}")
+
+    def uninstall(self):
+        """
+        卸载 ClaudeCodeManager（交互式确认）
+        """
+        import subprocess
+        import shutil
+        from pathlib import Path
+
+        self.console.print()
+        self.console.print("[bold red]⚠ 警告: 即将卸载 ClaudeCodeManager[/bold red]")
+        self.console.print()
+        self.console.print("这将执行以下操作:")
+        self.console.print("  1. 删除全局命令 [cyan]claude_env[/cyan]")
+        self.console.print("  2. (可选) 删除所有环境数据 [cyan]~/.claude_env[/cyan]")
+        self.console.print()
+
+        # 第一次确认
+        try:
+            confirmation = input("确认卸载? 请输入 yes 或 no: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            self.console.print()
+            self.console.print("[yellow]卸载已取消[/yellow]")
+            return
+
+        if confirmation != "yes":
+            self.console.print()
+            self.console.print("[yellow]卸载已取消[/yellow]")
+            return
+
+        self.console.print()
+
+        # 1. 删除全局命令
+        launcher_path = Path.home() / ".local" / "bin" / "claude_env"
+        if launcher_path.exists():
+            try:
+                launcher_path.unlink()
+                self.console.print(f"[green]✓ 已删除全局命令:[/green] {launcher_path}")
+            except Exception as e:
+                self.console.print(f"[red]✗ 删除全局命令失败:[/red] {e}")
+        else:
+            self.console.print("[yellow]全局命令不存在，跳过[/yellow]")
+
+        # 2. 询问是否删除环境数据
+        self.console.print()
+        self.console.print("[bold]环境数据位于:[/bold] [cyan]~/.claude_env[/cyan]")
+        self.console.print("这包含您所有保存的 Claude Code 环境配置")
+        self.console.print()
+
+        try:
+            delete_data = input("是否删除所有环境数据? (y/N): ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            delete_data = "n"
+
+        if delete_data in ["y", "yes"]:
+            env_dir = Path.home() / ".claude_env"
+            if env_dir.exists():
+                try:
+                    shutil.rmtree(env_dir)
+                    self.console.print(f"[green]✓ 已删除环境数据:[/green] {env_dir}")
+                except Exception as e:
+                    self.console.print(f"[red]✗ 删除环境数据失败:[/red] {e}")
+            else:
+                self.console.print("[yellow]环境数据不存在，跳过[/yellow]")
+        else:
+            self.console.print("[cyan]保留环境数据[/cyan]")
+
+        # 完成
+        self.console.print()
+        self.console.print("[green]✓ 卸载完成![/green]")
+        self.console.print()
+        self.console.print("[dim]项目源代码仍保留在当前目录[/dim]")
+        self.console.print("[dim]如需完全删除，请手动删除项目目录[/dim]")

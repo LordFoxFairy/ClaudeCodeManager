@@ -54,7 +54,7 @@ INSTALL_DIR="$SCRIPT_DIR"
 cd "\$INSTALL_DIR"
 
 # 使用 uv 运行
-exec uv run python -m claude_env.cli "\$@"
+exec uv run python -m claude_env "\$@"
 EOF
 
 chmod +x "$LAUNCHER_PATH"

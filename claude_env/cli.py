@@ -140,3 +140,14 @@ def remove_env(
     """
     manager: EnvironmentManager = ctx.obj
     manager.remove(env_name)
+
+
+@app.command("uninstall")
+def uninstall_app(
+    ctx: typer.Context,
+):
+    """
+    卸载 ClaudeCodeManager（交互式确认）。
+    """
+    manager: EnvironmentManager = ctx.obj
+    manager.uninstall()

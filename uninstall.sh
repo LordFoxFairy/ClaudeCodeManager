@@ -10,46 +10,40 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# 获取脚本目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo -e "${YELLOW}[卸载] ClaudeCodeManager${NC}"
 echo ""
 
-# 检查全局命令是否存在
-LAUNCHER_PATH="$HOME/.local/bin/claude_env"
-
-if [ -f "$LAUNCHER_PATH" ]; then
-    echo -e "${YELLOW}[删除] 全局命令 'claude_env'...${NC}"
-    rm -f "$LAUNCHER_PATH"
-    echo "✓ 已删除: $LAUNCHER_PATH"
+# 检查 claude_env 命令是否可用
+if command -v claude_env &> /dev/null; then
+    echo "使用 claude_env uninstall 命令进行卸载..."
+    echo ""
+    claude_env uninstall
+elif [ -f "$HOME/.local/bin/claude_env" ]; then
+    # 如果命令不在 PATH 中但文件存在，直接调用
+    echo "使用 claude_env uninstall 命令进行卸载..."
+    echo ""
+    "$HOME/.local/bin/claude_env" uninstall
 else
-    echo -e "${YELLOW}全局命令未找到，跳过${NC}"
-fi
+    # 如果命令不存在，使用 Python 直接运行
+    echo "claude_env 命令未安装，使用 Python 直接运行卸载..."
+    echo ""
 
-# 询问是否删除环境数据
-echo ""
-echo -e "${YELLOW}注意: 环境数据位于 ~/.claude_env${NC}"
-echo "这包含您所有保存的 Claude Code 环境配置"
-echo ""
-read -p "是否删除所有环境数据? (y/N): " -n 1 -r
-echo ""
+    # 检查是否在项目目录中
+    if [ -f "$SCRIPT_DIR/claude_env/__main__.py" ]; then
+        cd "$SCRIPT_DIR"
 
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if [ -d "$HOME/.claude_env" ]; then
-        echo -e "${YELLOW}[删除] 环境数据 ~/.claude_env...${NC}"
-        rm -rf "$HOME/.claude_env"
-        echo "✓ 已删除所有环境数据"
+        # 优先使用 uv，如果不存在则使用 python
+        if command -v uv &> /dev/null; then
+            uv run python -m claude_env uninstall
+        else
+            python -m claude_env uninstall
+        fi
     else
-        echo "环境数据目录不存在，跳过"
+        echo -e "${RED}错误: 找不到 claude_env 模块${NC}"
+        echo "请在项目目录中运行此脚本"
+        exit 1
     fi
-else
-    echo "保留环境数据"
 fi
-
-# 完成
-echo ""
-echo -e "${GREEN}✓ 卸载完成!${NC}"
-echo ""
-echo "项目源代码仍保留在:"
-echo "  $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo ""
-echo "如需完全删除，请手动删除该目录"
-echo ""
