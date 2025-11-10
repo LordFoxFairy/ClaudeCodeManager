@@ -53,21 +53,77 @@ cat > "$LAUNCHER_PATH" <<EOF
 INSTALL_DIR="$SCRIPT_DIR"
 cd "\$INSTALL_DIR"
 
-# 使用 uv 运行
-exec uv run python -m claude_env "\$@"
+# 使用 uv 运行 launcher
+exec uv run python claude_env_launcher.py "\$@"
 EOF
 
 chmod +x "$LAUNCHER_PATH"
 
-# 检查 PATH
+# 检查和配置 PATH
 echo -e "${YELLOW}[检查] PATH 配置...${NC}"
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-    echo -e "${YELLOW}警告: $HOME/.local/bin 不在 PATH 中${NC}"
-    echo "请在您的 shell 配置文件中添加:"
+
+# 定义 PATH 导出行
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+
+# 检测 shell 配置文件
+SHELL_NAME=$(basename "$SHELL")
+CONFIG_FILES=()
+
+# 根据不同 shell 添加配置文件
+if [ "$SHELL_NAME" = "zsh" ]; then
+    CONFIG_FILES+=("$HOME/.zshrc")
+elif [ "$SHELL_NAME" = "bash" ]; then
+    CONFIG_FILES+=("$HOME/.bashrc" "$HOME/.bash_profile")
+fi
+
+# 添加通用配置文件
+CONFIG_FILES+=("$HOME/.profile")
+
+# 标记是否已配置
+PATH_CONFIGURED=false
+
+# 检查并添加 PATH 到配置文件
+for config_file in "${CONFIG_FILES[@]}"; do
+    if [ -f "$config_file" ]; then
+        # 检查是否已有 PATH 配置
+        if ! grep -q "$HOME/.local/bin" "$config_file" 2>/dev/null; then
+            echo "  添加 PATH 到 $config_file"
+            echo "" >> "$config_file"
+            echo "# Added by ClaudeCodeManager" >> "$config_file"
+            echo "$PATH_LINE" >> "$config_file"
+            PATH_CONFIGURED=true
+        else
+            echo "  $config_file 已配置 PATH"
+            PATH_CONFIGURED=true
+        fi
+    fi
+done
+
+# 如果没有找到配置文件，创建一个
+if [ "$PATH_CONFIGURED" = false ]; then
+    if [ "$SHELL_NAME" = "zsh" ]; then
+        echo "  创建 ~/.zshrc 并添加 PATH"
+        echo "# Added by ClaudeCodeManager" >> "$HOME/.zshrc"
+        echo "$PATH_LINE" >> "$HOME/.zshrc"
+        PATH_CONFIGURED=true
+    elif [ "$SHELL_NAME" = "bash" ]; then
+        echo "  创建 ~/.bashrc 并添加 PATH"
+        echo "# Added by ClaudeCodeManager" >> "$HOME/.bashrc"
+        echo "$PATH_LINE" >> "$HOME/.bashrc"
+        PATH_CONFIGURED=true
+    fi
+fi
+
+# 立即导出 PATH 到当前会话
+export PATH="$HOME/.local/bin:$PATH"
+
+if [ "$PATH_CONFIGURED" = true ]; then
+    echo -e "${GREEN}✓ PATH 已自动配置${NC}"
+else
+    echo -e "${YELLOW}警告: 无法自动配置 PATH${NC}"
+    echo "请手动添加到 shell 配置文件:"
     echo ""
-    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-    echo ""
-    echo "例如 ~/.zshrc 或 ~/.bashrc"
+    echo "  $PATH_LINE"
     echo ""
 fi
 

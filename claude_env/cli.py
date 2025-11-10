@@ -9,7 +9,11 @@ from typing_extensions import Annotated
 from claude_env.manager import EnvironmentManager
 
 # --- 初始化 Typer 应用和 Rich Console ---
-app = typer.Typer(help="Claude 环境管理器 (claude_env)", add_completion=False)
+app = typer.Typer(
+    help="Claude 环境管理器 (claude_env)",
+    add_completion=False,
+    name="claude_env"  # 设置程序名称
+)
 console = Console()
 
 
